@@ -169,9 +169,10 @@ void AZombieSurvivalCharacter::SetupStimulusSource()
 
 void AZombieSurvivalCharacter::UpdateProximityItems()
 {
-	if (!InventoryComponent) return;
+	if (!InventoryComponent || !InventoryWidget) return;
 
-	InventoryComponent->ProximityItems.Empty(); // Limpiar la lista antes de actualizar
+	InventoryComponent->ProximityItems.Empty();// Limpiar la lista antes de actualizar
+	InventoryWidget->ClearProximityUI();
 
 	FVector PlayerLocation = GetActorLocation();
 	float ScanRadius = InventoryComponent->ProximityScanRadius; // Usar el radio configurado
@@ -194,6 +195,7 @@ void AZombieSurvivalCharacter::UpdateProximityItems()
 			}
 		}
 	}
+	InventoryWidget->UpdateProximityUI(InventoryComponent->ProximityItems);
 }
 
 void AZombieSurvivalCharacter::ToggleInventory()

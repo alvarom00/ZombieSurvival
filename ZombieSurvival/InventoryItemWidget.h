@@ -23,15 +23,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Inventory")
 	UItem* Item;
 
-	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	void SetItemData(TSubclassOf<UItem> ItemRef);
-
 protected:
 	/** Detecta cuando se empieza a arrastrar el ítem */
 	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation) override;
-
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	class UTextBlock* ItemNameText;
 
 private:
 	UItem* ItemData;

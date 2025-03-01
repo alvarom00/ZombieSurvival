@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "InventoryComponent.h"
+#include "Components/ScrollBox.h"
 #include "InventoryWidget.generated.h"
 
 class UInventorySlotWidget;
@@ -19,10 +20,13 @@ class ZOMBIESURVIVAL_API UInventoryWidget : public UUserWidget
 	
 public:
 
+    virtual void NativeConstruct() override;
+
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     void UpdateProximityUI(const TArray<TSubclassOf<UItem>>& NearbyItems);
 
-	virtual void NativeConstruct() override;
+    UFUNCTION(BlueprintCallable)
+    void ClearProximityUI();
 
     void SetInventoryComponent(UInventoryComponent* NewInventoryComponent);
     void UpdateInventoryUI();
@@ -30,7 +34,7 @@ public:
 protected:
     /** Sección de proximidad */
     UPROPERTY(meta = (BindWidget))
-    UUniformGridPanel* ProximitySection;
+    UScrollBox* ProximitySection;
 
     /** Sección de manos */
     UPROPERTY(meta = (BindWidget))
@@ -49,7 +53,7 @@ protected:
     TSubclassOf<UInventoryItemWidget> ItemWidgetClass;
 
     /** Widget Blueprint para los slots */
-    UPROPERTY(EditAnywhere, Category = "Inventory")
+    UPROPERTY(EditDefaultsOnly, Category = "Inventory")
     TSubclassOf<UInventorySlotWidget> SlotWidgetClass;
 
     UPROPERTY()

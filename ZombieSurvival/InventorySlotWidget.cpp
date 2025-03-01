@@ -5,6 +5,27 @@
 #include "InventoryItemWidget.h"
 #include "Blueprint/DragDropOperation.h"
 
+void UInventorySlotWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	SetVisibility(ESlateVisibility::Visible);
+}
+
+void UInventorySlotWidget::SetItemName(const FString& Name)
+{
+	{
+		if (ItemNameTextBlock) // Verifica que el TextBlock sea válido
+		{
+			ItemNameTextBlock->SetText(FText::FromString(Name));
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ItemNameTextBlock is null!"));
+		}
+	}
+}
+
 bool UInventorySlotWidget::CanAcceptItem(UItem* InItem) const
 {
 	// Lógica para validar si el ítem puede colocarse aquí

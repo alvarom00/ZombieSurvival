@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/TextBlock.h"
 #include "InventorySlotWidget.generated.h"
 
 /**
@@ -19,12 +20,20 @@ class ZOMBIESURVIVAL_API UInventorySlotWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
+
+	virtual void NativeConstruct() override;
 	/** Ítem actual en este slot */
 	UPROPERTY(BlueprintReadWrite, Category = "Inventory")
 	UItem* Item;
 
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* ItemNameTextBlock;
+
+	virtual void SetItemName(const FString& Name);
+
 	/** Verifica si el ítem puede colocarse en este slot */
 	bool CanAcceptItem(UItem* InItem) const;
+
 
 protected:
 	/** Maneja el evento de soltar un ítem en este slot */

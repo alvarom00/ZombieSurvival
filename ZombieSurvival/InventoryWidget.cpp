@@ -43,22 +43,41 @@ void UInventoryWidget::SetInventoryComponent(UInventoryComponent* NewInventoryCo
 
 void UInventoryWidget::UpdateProximityUI(const TArray<TSubclassOf<UItem>>& NearbyItems)
 {
-    if (!ProximitySection || !ItemWidgetClass) return;
+    if (!ProximitySection) return;
 
-    ProximitySection->ClearChildren(); // Limpia la sección antes de actualizar
+    ProximitySection->ClearChildren(); // Limpiar la lista actual
 
-    for (TSubclassOf<UItem> Item : NearbyItems)
+    for (TSubclassOf<UItem> ItemClass : NearbyItems)
     {
-        if (!Item) continue;
-
-        UInventoryItemWidget* ItemWidget = CreateWidget<UInventoryItemWidget>(this, ItemWidgetClass);
-        if (ItemWidget)
+        if (ItemClass)
         {
+            // Crear una instancia del ítem para obtener el nombre
+            UItem* ItemInstance = ItemClass->GetDefaultObject<UItem>();
+            if (ItemInstance)
+            {
+                // Accede al nombre del ítem
+                FName ItemName = ItemInstance->ItemName;
 
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Item In Proximity: %d"));
-            ItemWidget->SetItemData(Item); // Asegúrate de tener esta función en tu `UInventoryItemWidget`
-            ProximitySection->AddChildToUniformGrid(ItemWidget);
+                // Crear un nuevo widget para el ítem
+                UInventorySlotWidget* SlotWidget = CreateWidget<UInventorySlotWidget>(this, SlotWidgetClass);
 
+                if (SlotWidget)
+                {
+                    // Configurar el nombre del ítem
+                    SlotWidget->SetItemName(ItemName.ToString());
+
+                    // Añadir el widget a la lista
+                    ProximitySection->AddChild(SlotWidget);
+                }
+            }
         }
+    }
+}
+
+void UInventoryWidget::ClearProximityUI()
+{
+    if (ProximitySection) // Asegurar que el widget de proximidad existe
+    {
+        ProximitySection->ClearChildren(); // Elimina los widgets viejos
     }
 }

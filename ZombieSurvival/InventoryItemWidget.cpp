@@ -6,17 +6,6 @@
 #include "Components/TextBlock.h"
 #include "Item.h"
 
-void UInventoryItemWidget::SetItemData(TSubclassOf<UItem> ItemRef)
-{
-	if (!Item) return;
-	ItemData = Item;
-
-	if (ItemNameText)
-	{
-		ItemNameText->SetText(FText::FromString(Item->ItemName.ToString()));
-	}
-}
-
 void UInventoryItemWidget::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation)
 {
 	if (!Item) return;
