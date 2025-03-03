@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Item.h"
+#include "ItemActor.h"
 #include "ClothingItem.h"
 #include "InventoryComponent.generated.h"
 
@@ -21,7 +22,7 @@ public:
 	UInventoryComponent();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
-	TArray<TSubclassOf<UItem>> ProximityItems;
+	TArray<AItemActor*> ProximityItems;
 
 	/** Ítem en manos */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")

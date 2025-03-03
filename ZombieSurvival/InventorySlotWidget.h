@@ -29,6 +29,9 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ItemNameTextBlock;
 
+	UPROPERTY(meta = (BindWidget))
+	class UUniformGridPanel* PocketGrid;
+
 	virtual void SetItemName(const FString& Name);
 
 	/** Verifica si el ítem puede colocarse en este slot */

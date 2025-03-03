@@ -24,6 +24,9 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     UStaticMeshComponent* MeshComponent;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Proximity")
+    class UBoxComponent* CollisionComponent;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
     TSubclassOf<UItem>ItemData; // Información del ítem en el inventario
 

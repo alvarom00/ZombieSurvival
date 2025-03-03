@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "InventoryComponent.h"
+#include "ItemActor.h"
 #include "Components/ScrollBox.h"
+#include "PocketSlotWidget.h"
 #include "InventoryWidget.generated.h"
 
 class UInventorySlotWidget;
@@ -23,7 +25,7 @@ public:
     virtual void NativeConstruct() override;
 
     UFUNCTION(BlueprintCallable, Category = "Inventory")
-    void UpdateProximityUI(const TArray<TSubclassOf<UItem>>& NearbyItems);
+    void UpdateProximityUI(const TArray<AItemActor*>& NearbyItems);
 
     UFUNCTION(BlueprintCallable)
     void ClearProximityUI();
@@ -55,6 +57,9 @@ protected:
     /** Widget Blueprint para los slots */
     UPROPERTY(EditDefaultsOnly, Category = "Inventory")
     TSubclassOf<UInventorySlotWidget> SlotWidgetClass;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+    TSubclassOf<UPocketSlotWidget> PocketSlotWidgetClass;
 
     UPROPERTY()
     UInventoryComponent* InventoryComponent;

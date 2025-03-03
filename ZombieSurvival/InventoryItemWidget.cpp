@@ -18,3 +18,18 @@ void UInventoryItemWidget::NativeOnDragDetected(const FGeometry& InGeometry, con
 	// Iniciar Drag & Drop
 	OutOperation = DragOperation;
 }
+
+void UInventoryItemWidget::SetOccupied(bool bIsOccupied)
+{
+    bOccupied = bIsOccupied;
+
+    // Actualizar visualización según el estado
+    if (bOccupied)
+    {
+        // Cambiar el color de fondo o mostrar una animación
+    }
+    else
+    {
+        // Restaurar apariencia predeterminada
+    }
+}

@@ -4,6 +4,9 @@
 #include "InventorySlotWidget.h"
 #include "InventoryItemWidget.h"
 #include "Blueprint/DragDropOperation.h"
+#include "Item.h"
+#include "ClothingItem.h"
+#include "Components/UniformGridPanel.h"
 
 void UInventorySlotWidget::NativeConstruct()
 {

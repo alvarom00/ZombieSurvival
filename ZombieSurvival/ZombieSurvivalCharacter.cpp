@@ -4,9 +4,13 @@
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
+#include "Engine/World.h"
+#include "Engine/OverlapResult.h"
+#include "CollisionShape.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
@@ -62,6 +66,20 @@ AZombieSurvivalCharacter::AZombieSurvivalCharacter()
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 	bIsInventoryOpen = false;
 
+
+	ProximitySphere = CreateDefaultSubobject<USphereComponent>(TEXT("ProximitySphere"));
+	ProximitySphere->SetupAttachment(RootComponent);
+	ProximitySphere->SetSphereRadius(300.f); // Define el radio
+	ProximitySphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly); // Solo consulta colisiones
+	ProximitySphere->SetCollisionObjectType(ECC_WorldDynamic);
+	ProximitySphere->SetCollisionResponseToAllChannels(ECR_Ignore);
+	ProximitySphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);  // Detectar jugadores/NPCs
+	ProximitySphere->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Overlap);
+	ProximitySphere->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
+
+	ProximitySphere->OnComponentBeginOverlap.AddDynamic(this, &AZombieSurvivalCharacter::OnProximityEnter);
+	ProximitySphere->OnComponentEndOverlap.AddDynamic(this, &AZombieSurvivalCharacter::OnProximityExit);
+
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
@@ -72,11 +90,6 @@ AZombieSurvivalCharacter::AZombieSurvivalCharacter()
 void AZombieSurvivalCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (bIsInventoryOpen)
-	{
-		UpdateProximityItems();
-	}
 }
 
 void AZombieSurvivalCharacter::NotifyControllerChanged()
@@ -167,39 +180,9 @@ void AZombieSurvivalCharacter::SetupStimulusSource()
 	}
 }
 
-void AZombieSurvivalCharacter::UpdateProximityItems()
-{
-	if (!InventoryComponent || !InventoryWidget) return;
-
-	InventoryComponent->ProximityItems.Empty();// Limpiar la lista antes de actualizar
-	InventoryWidget->ClearProximityUI();
-
-	FVector PlayerLocation = GetActorLocation();
-	float ScanRadius = InventoryComponent->ProximityScanRadius; // Usar el radio configurado
-
-	TArray<AActor*> NearbyActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AItemActor::StaticClass(), NearbyActors);
-
-	for (AActor* Actor : NearbyActors)
-	{
-		AItemActor* ItemActor = Cast<AItemActor>(Actor);
-		if (ItemActor && FVector::Dist(PlayerLocation, ItemActor->GetActorLocation()) <= ScanRadius)
-		{
-			if (ItemActor->ItemData) // Verifica que el ítem sea válido
-			{
-				InventoryComponent->ProximityItems.Add(ItemActor->ItemData);
-				if (InventoryWidget)
-				{
-					InventoryWidget->UpdateProximityUI(InventoryComponent->ProximityItems);
-				}
-			}
-		}
-	}
-	InventoryWidget->UpdateProximityUI(InventoryComponent->ProximityItems);
-}
-
 void AZombieSurvivalCharacter::ToggleInventory()
 {
+	bIsInventoryOpen = !bIsInventoryOpen;
 
 	if (!InventoryWidget)
 	{
@@ -216,21 +199,35 @@ void AZombieSurvivalCharacter::ToggleInventory()
 
 	if (bIsInventoryOpen)
 	{
-		InventoryWidget->RemoveFromViewport();
-		PlayerController->bShowMouseCursor = false;
-
-		PlayerController->SetInputMode(FInputModeGameOnly());
-	}
-	else
-	{
 		InventoryWidget->AddToViewport();
 		PlayerController->bShowMouseCursor = true;
 		FInputModeGameAndUI InputMode;
 		InputMode.SetWidgetToFocus(InventoryWidget->TakeWidget());
 		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
 		PlayerController->SetInputMode(InputMode);
+
+		// FORZAR actualización de ítems en proximidad al abrir el inventario
+		TArray<AActor*> OverlappingActors;
+		ProximitySphere->GetOverlappingActors(OverlappingActors, AItemActor::StaticClass());
+		InventoryComponent->ProximityItems.Empty();
+
+		for (AActor* Actor : OverlappingActors)
+		{
+			AItemActor* ItemActor = Cast<AItemActor>(Actor);
+			if (ItemActor && ItemActor->ItemData)
+			{
+				InventoryComponent->ProximityItems.Add(ItemActor);
+			}
+		}
+
+		InventoryWidget->UpdateProximityUI(InventoryComponent->ProximityItems);
 	}
-	bIsInventoryOpen = !bIsInventoryOpen;
+	else
+	{
+		InventoryWidget->RemoveFromParent();
+		PlayerController->bShowMouseCursor = false;
+		PlayerController->SetInputMode(FInputModeGameOnly());
+	}
 }
 
 void AZombieSurvivalCharacter::BeginPlay()
@@ -262,5 +259,37 @@ void AZombieSurvivalCharacter::BeginPlay()
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("InventoryWidgetClass is null! Please assign a widget class in the editor or via code."));
+	}
+}
+
+void AZombieSurvivalCharacter::OnProximityEnter(
+	UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex,
+	bool bFromSweep,
+	const FHitResult& SweepResult)
+{
+	if (!bIsInventoryOpen) return; // Solo ejecuta si el inventario está abierto
+
+	AItemActor* ItemActor = Cast<AItemActor>(OtherActor);
+	if (ItemActor)
+	{
+		InventoryComponent->ProximityItems.AddUnique(ItemActor); // Agrega el AItemActor directamente
+		InventoryWidget->UpdateProximityUI(InventoryComponent->ProximityItems);
+	}
+}
+
+void AZombieSurvivalCharacter::OnProximityExit(
+	UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex)
+{
+	AItemActor* ItemActor = Cast<AItemActor>(OtherActor);
+	if (ItemActor)
+	{
+		InventoryComponent->ProximityItems.Remove(ItemActor);
+		InventoryWidget->UpdateProximityUI(InventoryComponent->ProximityItems);
 	}
 }
